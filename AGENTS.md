@@ -8,9 +8,10 @@ This repository contains a Home Assistant custom integration for ARPAE Emilia-Ro
 - `api.py` handles ARPAE endpoint fetching and response parsing.
 - `coordinator.py` contains update coordination.
 - `sensor.py` defines exposed Home Assistant sensor entities.
+- `weather.py` defines the daily forecast `WeatherEntity`.
 - `const.py` and `manifest.json` hold integration constants and metadata.
 
-Tests live in `tests/`, currently focused on parser behavior in `tests/test_api.py`. User-facing setup notes are in `README.md`.
+Tests live in `tests/`, currently focused on parser and weather forecast mapping behavior in `tests/test_api.py`. User-facing setup notes are in `README.md`.
 
 ## Build, Test, and Development Commands
 
@@ -25,13 +26,19 @@ pip install -e ".[dev]"
 Run the test suite with:
 
 ```bash
-pytest
+pytest -q
 ```
 
 Run a focused test file while iterating:
 
 ```bash
 pytest tests/test_api.py
+```
+
+Run clean verification with Podman:
+
+```bash
+podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-312 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
 ```
 
 For manual Home Assistant testing, copy the integration into a Home Assistant config directory:
@@ -52,8 +59,12 @@ Tests use `pytest`. Name tests `test_<behavior>` and keep fixtures or builders l
 
 ## Commit & Pull Request Guidelines
 
-This checkout does not include local Git history, so no repository-specific commit convention is available. Use concise imperative commit subjects, for example `Add alert severity parser tests`. Pull requests should describe the behavior change, list validation commands, and call out Home Assistant configuration or entity changes. Include screenshots only when sensor presentation or dashboard examples change.
+Use concise imperative commit subjects, for example `Add alert severity parser tests`. Pull requests should describe the behavior change, list validation commands, and call out Home Assistant configuration or entity changes. Include screenshots only when sensor presentation or dashboard examples change.
 
 ## Security & Configuration Tips
 
 Do not commit Home Assistant secrets, tokens, or private `/config` files. Keep `manifest.json` metadata aligned with `pyproject.toml` version changes, and avoid adding runtime dependencies unless they are required by Home Assistant or the integration.
+
+## External Data Use
+
+The default `scan_interval` is 2 hours. Keep polling conservative and do not add bulk extraction behavior. ARPAE bulletin data is daily/slot-based; do not add hourly or nowcast forecast entities unless the source data actually supports that behavior.

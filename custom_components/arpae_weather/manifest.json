@@ -1,7 +1,7 @@
 {
   "domain": "arpae_weather",
   "name": "ARPAE Weather",
-  "codeowners": [],
+  "codeowners": ["@beelzetron"],
   "documentation": "https://github.com/beelzetron/ha-arpae-weather",
   "iot_class": "cloud_polling",
   "requirements": [],

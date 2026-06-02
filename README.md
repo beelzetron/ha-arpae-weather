@@ -4,6 +4,13 @@ Home Assistant custom integration for ARPAE Emilia-Romagna forecasts and weather
 
 This MVP exposes sensor entities and one daily forecast weather entity. It fetches public ARPAE JSON endpoints server-side so dashboards do not need custom frontend fetch logic.
 
+## Scope
+
+- YAML configuration only.
+- Daily ARPAE forecast support through `weather.arpae_weather`.
+- Alert and tendency metadata through sensor entities.
+- No hourly forecast or nowcast support.
+
 ## Installation
 
 Copy the integration folder into Home Assistant:
@@ -24,6 +31,15 @@ arpae_weather:
 ```
 
 Restart Home Assistant.
+
+## Configuration
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `province` | `BO` | Province code used for provincial forecast data. |
+| `zone` | `P` | Local area type: `P` pianura, `C` collina, `R` rilievi. |
+| `alert_zone` | `C2` | Allerta Meteo Emilia-Romagna alert zone. |
+| `scan_interval` | `hours: 2` | Home Assistant polling interval. Keep this conservative. |
 
 ## Entities
 
@@ -65,3 +81,25 @@ The default `scan_interval` is 2 hours, so a normal Home Assistant instance make
 ## MVP Scope
 
 This first version is YAML-only and supports daily weather forecasts. It intentionally does not include a config flow, hourly forecasts, nowcast support, diagnostics, HACS metadata, or a custom card.
+
+## Development
+
+Install development dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+Run tests:
+
+```bash
+pytest -q
+```
+
+Clean verification with Podman:
+
+```bash
+podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-312 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
+```
