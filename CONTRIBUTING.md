@@ -33,3 +33,7 @@ This integration intentionally supports daily forecasts only. ARPAE bulletin dat
 ## Data Use
 
 Keep polling intervals conservative. The default `scan_interval` is 2 hours and should not be reduced without a clear need.
+
+## Coding Agent Assistance
+
+This repository may use coding agents to help draft code, tests, and documentation. Contributors are responsible for reviewing generated changes, verifying behavior, and ensuring submitted code is appropriate for the project.

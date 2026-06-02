@@ -103,3 +103,7 @@ Clean verification with Podman:
 ```bash
 podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-312 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
 ```
+
+## Development Disclosure
+
+This software is developed with assistance from coding agents. Changes remain reviewed, tested, and maintained by the repository owner.
