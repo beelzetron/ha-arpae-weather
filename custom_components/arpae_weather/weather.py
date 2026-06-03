@@ -59,4 +59,4 @@ class ArpaeWeatherEntity(CoordinatorEntity[ArpaeWeatherCoordinator], WeatherEnti
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         super()._handle_coordinator_update()
-        self.hass.async_create_task(self.async_update_listeners())
+        self.hass.async_create_task(self.async_update_listeners({"daily"}))

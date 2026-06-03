@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import date, datetime, time, timezone, timedelta
+from json import JSONDecodeError
 import re
 from typing import TYPE_CHECKING, Any
+
+from aiohttp import ClientError, ClientResponseError
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -13,6 +17,8 @@ if TYPE_CHECKING:
 FORECAST_URL = "https://apps.arpae.it/REST/meteo_bollettini/?sort=-_id&max_results=1"
 ALERT_URL = "https://allertameteo.regione.emilia-romagna.it/o/get-stato-allerta"
 ALERT_BASE_URL = "https://allertameteo.regione.emilia-romagna.it"
+FETCH_RETRY_DELAYS = (5.0, 20.0)
+RETRY_HTTP_STATUSES = {408, 429, 500, 502, 503, 504}
 
 ALERT_SEVERITY = {
     "green": 0,
@@ -122,6 +128,10 @@ class ArpaeWeatherData:
     emission: str | None
 
 
+class ArpaeWeatherError(RuntimeError):
+    """Raised when ARPAE data cannot be fetched or parsed."""
+
+
 def build_daily_forecast(
     forecasts: tuple[ForecastDay, ...],
     base_date: date | None = None,
@@ -189,8 +199,13 @@ def parse_forecast_number(value: str | None) -> float | None:
 class ArpaeWeatherClient:
     """Small async client for public ARPAE JSON endpoints."""
 
-    def __init__(self, session: ClientSession) -> None:
+    def __init__(
+        self,
+        session: ClientSession,
+        retry_delays: tuple[float, ...] = FETCH_RETRY_DELAYS,
+    ) -> None:
         self._session = session
+        self._retry_delays = retry_delays
 
     async def async_fetch_data(
         self,
@@ -214,12 +229,47 @@ class ArpaeWeatherClient:
         )
 
     async def _async_fetch_json(self, url: str) -> dict[str, Any]:
-        async with self._session.get(url) as response:
-            response.raise_for_status()
-            data = await response.json()
-            if not isinstance(data, dict):
-                raise ValueError("ARPAE response is not a JSON object")
-            return data
+        for attempt in range(len(self._retry_delays) + 1):
+            try:
+                async with self._session.get(url) as response:
+                    try:
+                        response.raise_for_status()
+                    except ClientResponseError as err:
+                        if err.status in RETRY_HTTP_STATUSES:
+                            raise
+                        raise ArpaeWeatherError(
+                            f"ARPAE endpoint {url} returned HTTP {err.status}"
+                        ) from err
+
+                    data = await response.json(content_type=None)
+                break
+            except JSONDecodeError as err:
+                if not await self._async_backoff(attempt):
+                    raise ArpaeWeatherError(
+                        f"ARPAE endpoint {url} returned invalid JSON"
+                    ) from err
+            except ClientResponseError as err:
+                if not await self._async_backoff(attempt):
+                    raise ArpaeWeatherError(
+                        f"ARPAE endpoint {url} returned HTTP {err.status}"
+                    ) from err
+            except ClientError as err:
+                if not await self._async_backoff(attempt):
+                    raise ArpaeWeatherError(
+                        f"ARPAE endpoint {url} request failed: {err}"
+                    ) from err
+
+        if not isinstance(data, dict):
+            raise ArpaeWeatherError(
+                f"ARPAE endpoint {url} returned {type(data).__name__}, expected JSON object"
+            )
+        return data
+
+    async def _async_backoff(self, attempt: int) -> bool:
+        if attempt >= len(self._retry_delays):
+            return False
+        await asyncio.sleep(self._retry_delays[attempt])
+        return True
 
 
 def parse_bulletin(

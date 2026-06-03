@@ -1,5 +1,7 @@
+import asyncio
 from datetime import date, datetime
 import importlib.util
+from json import JSONDecodeError
 from pathlib import Path
 import sys
 
@@ -11,6 +13,9 @@ sys.modules[SPEC.name] = api
 SPEC.loader.exec_module(api)
 
 build_daily_forecast = api.build_daily_forecast
+ArpaeWeatherClient = api.ArpaeWeatherClient
+ArpaeWeatherError = api.ArpaeWeatherError
+ClientError = api.ClientError
 current_condition = api.current_condition
 parse_bulletin = api.parse_bulletin
 parse_forecast_number = api.parse_forecast_number
@@ -82,6 +87,41 @@ def make_bulletin():
         "domani": {"bollettino": bollettino},
         "dopodomani": {"bollettino": bollettino},
     }
+
+
+class FakeResponse:
+    def __init__(self, data, *, json_error=None):
+        self._data = data
+        self._json_error = json_error
+        self.json_content_type = "not-called"
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+    def raise_for_status(self):
+        return None
+
+    async def json(self, *, content_type=None):
+        self.json_content_type = content_type
+        if self._json_error is not None:
+            raise self._json_error
+        return self._data
+
+
+class FakeSession:
+    def __init__(self, response):
+        self.responses = list(response) if isinstance(response, list) else [response]
+        self.get_calls = 0
+
+    def get(self, url):
+        self.get_calls += 1
+        response = self.responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
+        return response
 
 
 def test_parse_bulletin_uses_configured_province_temperatures():
@@ -183,3 +223,68 @@ def test_parse_weather_alert_extracts_active_phenomena_and_max_severity():
         ("temporali", "Temporali", "yellow"),
         ("vento", "Vento", "orange"),
     ]
+
+
+def test_fetch_json_accepts_arpae_json_with_text_plain_mime_type():
+    response = FakeResponse({"ok": True})
+    client = ArpaeWeatherClient(FakeSession(response))
+
+    data = asyncio.run(client._async_fetch_json("https://example.test/arpae"))
+
+    assert data == {"ok": True}
+    assert response.json_content_type is None
+
+
+def test_fetch_json_rejects_non_object_payload():
+    client = ArpaeWeatherClient(FakeSession(FakeResponse([])))
+
+    try:
+        asyncio.run(client._async_fetch_json("https://example.test/arpae"))
+    except ArpaeWeatherError as err:
+        assert "returned list, expected JSON object" in str(err)
+    else:
+        raise AssertionError("Expected ArpaeWeatherError")
+
+
+def test_fetch_json_wraps_invalid_json():
+    error = JSONDecodeError("Expecting value", "", 0)
+    client = ArpaeWeatherClient(
+        FakeSession(FakeResponse(None, json_error=error)),
+        retry_delays=(),
+    )
+
+    try:
+        asyncio.run(client._async_fetch_json("https://example.test/arpae"))
+    except ArpaeWeatherError as err:
+        assert "returned invalid JSON" in str(err)
+    else:
+        raise AssertionError("Expected ArpaeWeatherError")
+
+
+def test_fetch_json_retries_temporary_request_failure():
+    session = FakeSession([ClientError("temporary DNS failure"), FakeResponse({"ok": True})])
+    client = ArpaeWeatherClient(session, retry_delays=(0.0,))
+
+    data = asyncio.run(client._async_fetch_json("https://example.test/arpae"))
+
+    assert data == {"ok": True}
+    assert session.get_calls == 2
+
+
+def test_fetch_json_raises_after_retry_budget_is_exhausted():
+    session = FakeSession(
+        [
+            ClientError("temporary DNS failure"),
+            ClientError("still failing"),
+            ClientError("last failure"),
+        ]
+    )
+    client = ArpaeWeatherClient(session, retry_delays=(0.0, 0.0))
+
+    try:
+        asyncio.run(client._async_fetch_json("https://example.test/arpae"))
+    except ArpaeWeatherError as err:
+        assert "request failed: last failure" in str(err)
+    else:
+        raise AssertionError("Expected ArpaeWeatherError")
+    assert session.get_calls == 3
