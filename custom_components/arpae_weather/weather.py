@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from homeassistant.components.weather import WeatherEntity, WeatherEntityFeature
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPrecipitationDepth, UnitOfSpeed, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -15,14 +14,13 @@ from .const import DOMAIN
 from .coordinator import ArpaeWeatherCoordinator
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: dict[str, Any],
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: dict[str, Any] | None = None,
 ) -> None:
     """Set up the ARPAE Weather weather entity."""
-    coordinator: ArpaeWeatherCoordinator = hass.data[DOMAIN]
+    coordinator: ArpaeWeatherCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([ArpaeWeatherEntity(coordinator)])
 
 

@@ -9,11 +9,13 @@ DOMAIN = "arpae_weather"
 CONF_PROVINCE = "province"
 CONF_ZONE = "zone"
 CONF_ALERT_ZONE = "alert_zone"
+CONF_SCAN_INTERVAL_SECONDS = "scan_interval_seconds"
 
 DEFAULT_PROVINCE = "BO"
 DEFAULT_ZONE = "P"
 DEFAULT_ALERT_ZONE = "C2"
 DEFAULT_SCAN_INTERVAL = timedelta(hours=2)
+DEFAULT_SCAN_INTERVAL_SECONDS = int(DEFAULT_SCAN_INTERVAL.total_seconds())
 
 VALID_PROVINCES = ("BO", "MO", "PR", "RE", "PC", "FE", "RA", "FC", "RN")
 VALID_ZONES = ("P", "C", "R")

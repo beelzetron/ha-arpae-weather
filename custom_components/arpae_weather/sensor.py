@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Callable
+from typing import Callable
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -142,14 +143,13 @@ SENSOR_DESCRIPTIONS: tuple[ArpaeSensorDescription, ...] = (
 )
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: dict[str, Any],
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: dict[str, Any] | None = None,
 ) -> None:
     """Set up ARPAE Weather sensors."""
-    coordinator: ArpaeWeatherCoordinator = hass.data[DOMAIN]
+    coordinator: ArpaeWeatherCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         ArpaeWeatherSensor(coordinator, description)
         for description in SENSOR_DESCRIPTIONS

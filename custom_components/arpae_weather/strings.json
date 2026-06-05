@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ARPAE Weather",
+        "description": "Configure ARPAE Emilia-Romagna forecasts and weather alerts.",
+        "data": {
+          "province": "Province",
+          "zone": "Forecast zone",
+          "alert_zone": "Alert zone",
+          "scan_interval_minutes": "Update interval in minutes"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "ARPAE Weather is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ARPAE Weather options",
+        "data": {
+          "province": "Province",
+          "zone": "Forecast zone",
+          "alert_zone": "Alert zone",
+          "scan_interval_minutes": "Update interval in minutes"
+        }
+      }
+    }
+  }
+}

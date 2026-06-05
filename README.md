@@ -6,7 +6,8 @@ This MVP exposes sensor entities and one daily forecast weather entity. It fetch
 
 ## Scope
 
-- YAML configuration only.
+- Config Entry setup from the Home Assistant UI.
+- YAML import for existing `arpae_weather:` configurations.
 - Daily ARPAE forecast support through `weather.arpae_weather`.
 - Alert and tendency metadata through sensor entities.
 - No hourly forecast or nowcast support.
@@ -19,7 +20,9 @@ Copy the integration folder into Home Assistant:
 cp -R custom_components/arpae_weather /config/custom_components/arpae_weather
 ```
 
-Add YAML configuration:
+Restart Home Assistant, then add **ARPAE Weather** from Settings -> Devices & services.
+
+Existing YAML users can keep this block during migration:
 
 ```yaml
 arpae_weather:
@@ -30,7 +33,7 @@ arpae_weather:
     hours: 2
 ```
 
-Restart Home Assistant.
+On startup, Home Assistant imports the YAML values into a config entry. After confirming the integration works from the UI, the YAML block can be removed.
 
 ## Configuration
 
@@ -40,6 +43,8 @@ Restart Home Assistant.
 | `zone` | `P` | Local area type: `P` pianura, `C` collina, `R` rilievi. |
 | `alert_zone` | `C2` | Allerta Meteo Emilia-Romagna alert zone. |
 | `scan_interval` | `hours: 2` | Home Assistant polling interval. Keep this conservative. |
+
+Configuration can be changed later from the integration options in Home Assistant.
 
 ## Entities
 
@@ -78,9 +83,9 @@ This integration reads public ARPAE/Regione Emilia-Romagna weather and alert end
 
 The default `scan_interval` is 2 hours, so a normal Home Assistant instance makes 12 requests per endpoint per day. Keep polling intervals conservative, do not use this integration for bulk data extraction, and attribute ARPAE/Regione Emilia-Romagna as the data source when publishing dashboards or derived data.
 
-## MVP Scope
+## Scope Limits
 
-This first version is YAML-only and supports daily weather forecasts. It intentionally does not include a config flow, hourly forecasts, nowcast support, diagnostics, HACS metadata, or a custom card.
+This integration supports daily weather forecasts. It intentionally does not include hourly forecasts, nowcast support, diagnostics, HACS metadata, or a custom card.
 
 ## Development
 
@@ -101,7 +106,7 @@ pytest -q
 Clean verification with Podman:
 
 ```bash
-podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-312 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
+podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-314 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
 ```
 
 ## Development Disclosure

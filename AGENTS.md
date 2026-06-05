@@ -38,7 +38,7 @@ pytest tests/test_api.py
 Run clean verification with Podman:
 
 ```bash
-podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-312 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
+podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-314 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
 ```
 
 For manual Home Assistant testing, copy the integration into a Home Assistant config directory:
@@ -51,7 +51,7 @@ Then configure the `arpae_weather:` YAML block as shown in `README.md`.
 
 ## Coding Style & Naming Conventions
 
-Use Python 3.12 syntax and standard Home Assistant async patterns. Keep indentation at four spaces. Use `snake_case` for functions, variables, and test names; use `PascalCase` for classes; keep constants uppercase in `const.py`. Prefer typed dataclasses or explicit parser helpers when shaping ARPAE payloads, and keep network access separate from pure parsing logic so tests stay fast.
+Use Python 3.14 syntax and standard Home Assistant async patterns. Keep indentation at four spaces. Use `snake_case` for functions, variables, and test names; use `PascalCase` for classes; keep constants uppercase in `const.py`. Prefer typed dataclasses or explicit parser helpers when shaping ARPAE payloads, and keep network access separate from pure parsing logic so tests stay fast.
 
 ## Testing Guidelines
 
