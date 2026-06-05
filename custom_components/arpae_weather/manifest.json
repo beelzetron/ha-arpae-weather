@@ -4,8 +4,8 @@
   "codeowners": ["@beelzetron"],
   "config_flow": true,
   "documentation": "https://github.com/beelzetron/ha-arpae-weather",
-  "issue_tracker": "https://github.com/beelzetron/ha-arpae-weather/issues",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/beelzetron/ha-arpae-weather/issues",
   "requirements": [],
   "version": "0.1.0"
 }
