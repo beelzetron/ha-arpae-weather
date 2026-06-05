@@ -1,0 +1,8 @@
+{
+  "name": "ARPAE Weather",
+  "zip_release": true,
+  "filename": "arpae_weather.zip",
+  "render_readme": true,
+  "country": "IT",
+  "homeassistant": "2026.6.0"
+}

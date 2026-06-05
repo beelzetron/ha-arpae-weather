@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package HACS release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Validate release version
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import tomllib
+
+          tag = os.environ.get("GITHUB_REF_NAME", "")
+          manifest = json.loads(open("custom_components/arpae_weather/manifest.json", encoding="utf-8").read())
+          pyproject = tomllib.loads(open("pyproject.toml", "rb").read().decode())
+          version = manifest["version"]
+
+          if pyproject["project"]["version"] != version:
+              raise SystemExit("pyproject.toml and manifest.json versions do not match")
+          if tag and tag != f"v{version}":
+              raise SystemExit(f"tag {tag!r} does not match integration version v{version}")
+          PY
+
+      - name: Build HACS zip
+        run: |
+          cd custom_components/arpae_weather
+          zip -r ../../arpae_weather.zip . -x "*.pyc" "__pycache__/*"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: arpae_weather.zip
+          generate_release_notes: true

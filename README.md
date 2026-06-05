@@ -14,6 +14,14 @@ This MVP exposes sensor entities and one daily forecast weather entity. It fetch
 
 ## Installation
 
+### HACS
+
+1. In HACS, add `https://github.com/beelzetron/ha-arpae-weather` as a custom repository of type **Integration**.
+2. Install **ARPAE Weather** from HACS.
+3. Restart Home Assistant, then add **ARPAE Weather** from Settings -> Devices & services.
+
+### Manual
+
 Copy the integration folder into Home Assistant:
 
 ```bash
@@ -108,6 +116,13 @@ Clean verification with Podman:
 ```bash
 podman run --rm -v "$PWD:/workspace:Z" -w /workspace registry.access.redhat.com/ubi9/python-314 bash -lc 'python -m venv /tmp/venv && source /tmp/venv/bin/activate && pip install -e ".[dev]" >/tmp/pip.log && pytest -q && python -m compileall -q custom_components tests'
 ```
+
+## Releasing
+
+1. Update `pyproject.toml`, `custom_components/arpae_weather/manifest.json`, and `CHANGELOG.md` to the same version.
+2. Commit the release changes.
+3. Tag the commit with `vX.Y.Z` and push the tag.
+4. The release workflow creates a GitHub release with `arpae_weather.zip`, which HACS uses as its release asset.
 
 ## Development Disclosure
 
