@@ -6,7 +6,9 @@ on:
       - "v*.*.*"
 
 permissions:
+  attestations: write
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -41,6 +43,11 @@ jobs:
         run: |
           cd custom_components/arpae_weather
           zip -r ../../arpae_weather.zip . -x "*.pyc" "__pycache__/*"
+
+      - name: Generate artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: arpae_weather.zip
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
